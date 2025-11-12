@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Prediction Result</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Add Chart.js for visualization -->
+    <style>
+        body {
+            background: linear-gradient(120deg, #e3f0ff 0%, #f8fbff 100%);
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .main-center-wrapper {
+            flex: 1 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 90px); /* 90px = approx. navbar height */
+            padding: 0;
+        }
+        .custom-navbar {
+            background: linear-gradient(90deg, #1976d2 0%, #42a5f5 100%);
+            min-height: 70px;
+            box-shadow: 0 4px 16px rgba(25, 118, 210, 0.08);
+        }
+        .custom-navbar .navbar-brand {
+            color: #fff !important;
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 8px rgba(33, 150, 243, 0.15);
+        }
+        .custom-navbar .btn,
+        .custom-navbar .nav-link {
+            color: #fff !important;
+            border-color: #fff !important;
+            font-weight: 500;
+            margin-left: 0.5rem;
+            margin-right: 0.5rem;
+            transition: background 0.2s, color 0.2s;
+        }
+        .custom-navbar .btn-outline-primary:hover,
+        .custom-navbar .btn-outline-secondary:hover {
+            background: #fff !important;
+            color: #1976d2 !important;
+        }
+        .container-box {
+            max-width: 700px;
+            margin: 0;
+            padding: 36px 36px 28px 36px;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(25, 118, 210, 0.12);
+            border: 1px solid #e3f0ff;
+            text-align: center;
+        }
+        .container-box h2,
+        .container-box h4,
+        .container-box h5 {
+            text-align: center;
+            width: 100%;
+        }
+        .alert-info {
+            background: linear-gradient(90deg, #e3f0ff 0%, #bbdefb 100%);
+            color: #1976d2;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+        }
+        .progress {
+            background: #e3f0ff;
+            border-radius: 10px;
+            height: 22px;
+        }
+        .progress-bar {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        .list-group-item {
+            border: none;
+            background: #f8fbff;
+            color: #1976d2;
+            font-weight: 500;
+            font-size: 1.08rem;
+            margin-bottom: 2px;
+            text-align: left;
+        }
+        .chart-comparison-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 1.5rem;
+        }
+        .chart-container {
+            background: #f8fbff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(25, 118, 210, 0.06);
+            padding: 18px 10px 10px 10px;
+            min-width: 240px;
+            flex: 1 1 260px;
+            max-width: 320px;
+            margin: 0;
+            text-align: center;
+        }
+        .btn-secondary, .btn-success, .btn-danger {
+            font-weight: 600;
+            font-size: 1.05rem;
+            border-radius: 8px;
+            margin: 0 6px 6px 0;
+        }
+        .btn-secondary {
+            background: #1976d2;
+            border: none;
+        }
+        .btn-success {
+            background: #43a047;
+            border: none;
+        }
+        .btn-danger {
+            background: #e53935;
+            border: none;
+        }
+        @media (max-width: 800px) {
+            .chart-comparison-row {
+                flex-direction: column;
+                align-items: center;
+            }
+            .container-box {
+                padding: 18px 4vw 18px 4vw;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navigation Bar -->
+<nav class="navbar navbar-expand-lg custom-navbar mb-4">
+  <div class="container">
+    <a class="navbar-brand" href="/">Am I Diabetic?</a>
+    <div class="ms-auto">
+      <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary me-2"><i class="fas fa-chart-line"></i> Dashboard</a>
+      <a href="{{ url_for('home') }}" class="btn btn-outline-primary"><i class="fas fa-home"></i> Back to Home</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Result Display with Two-Column Layout -->
+<div class="main-center-wrapper">
+    <div class="container-box">
+        <h2 class="text-success">Your Diabetes Prediction Result</h2>
+        <div class="alert alert-info p-3">
+            <h3><strong>Prediction:</strong> {{ prediction }}</h3>
+        </div>
+
+        <!-- Risk Level Classification (Based on ADA/WHO Medical Guidelines) -->
+        <div class="mt-3">
+            <h4>Risk Level:
+                {% if HbA1c_level >= 6.5 or blood_glucose_level >= 200 %}
+                    <span class="text-danger">High Risk</span>
+                {% elif 5.7 <= HbA1c_level < 6.5 or 140 <= blood_glucose_level < 200 %}
+                    <span class="text-warning">Moderate Risk</span>
+                {% else %}
+                    <span class="text-success">Low Risk</span>
+                {% endif %}
+            </h4>
+
+            <!-- Risk Level Progress Bar -->
+            <div class="progress mt-2" style="height: 20px;">
+                <div class="progress-bar
+                    {% if HbA1c_level >= 6.5 or blood_glucose_level >= 200 %} bg-danger
+                    {% elif 5.7 <= HbA1c_level < 6.5 or 140 <= blood_glucose_level < 200 %} bg-warning
+                    {% else %} bg-success {% endif %}"
+                    role="progressbar" style="width:
+                    {% if HbA1c_level >= 6.5 or blood_glucose_level >= 200 %} 90%
+                    {% elif 5.7 <= HbA1c_level < 6.5 or 140 <= blood_glucose_level < 200 %} 60%
+                    {% else %} 30% {% endif %};">
+                </div>
+            </div>
+        </div>
+
+        <!-- Health Summary -->
+        <div class="mt-4 text-center">
+            <h4>Health Summary</h4>
+            <ul class="list-group d-inline-block text-start">
+                <li class="list-group-item"><i class="fas fa-user"></i> <strong>Age:</strong> {{ age }}</li>
+                <li class="list-group-item"><i class="fas fa-weight"></i> <strong>BMI:</strong> {{ bmi }}</li>
+                <li class="list-group-item"><i class="fas fa-heartbeat"></i> <strong>HbA1c Level:</strong> {{ HbA1c_level }}</li>
+                <li class="list-group-item"><i class="fas fa-tint"></i> <strong>Blood Glucose Level:</strong> {{ blood_glucose_level }}</li>
+                <li class="list-group-item"><i class="fas fa-venus-mars"></i> <strong>Gender:</strong> {{ gender }}</li>
+                <li class="list-group-item"><i class="fas fa-smoking"></i> <strong>Smoking History:</strong> {{ smoking_history }}</li>
+                <li class="list-group-item"><i class="fas fa-heart"></i> <strong>Heart Disease:</strong> {{ "Yes" if heart_disease == 1 else "No" }}</li>
+                <li class="list-group-item"><i class="fas fa-stethoscope"></i> <strong>Hypertension:</strong> {{ "Yes" if hypertension == 1 else "No" }}</li>
+            </ul>
+        </div>
+
+        <!-- Health Indicators Comparison -->
+        <h4 class="mt-4">Health Indicators Comparison</h4>
+        <div class="chart-comparison-row">
+            <div class="chart-container">
+                <h5>HbA1c Level</h5>
+                <canvas id="hba1cChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h5>Blood Glucose Level</h5>
+                <canvas id="glucoseChart"></canvas>
+            </div>
+        </div>
+
+            <div class="mt-4">
+            <h4>Manage Your Data</h4>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary mt-2">View Dashboard</a>
+            <a href="{{ url_for('export_csv') }}" class="btn btn-success mt-2">Download CSV</a>
+            <a href="{{ url_for('export_pdf') }}" class="btn btn-danger mt-2">Download PDF</a>
+        </div>
+
+
+    </div>
+</div>
+
+<script>
+    // HbA1c Line Chart
+    var hba1cCtx = document.getElementById('hba1cChart').getContext('2d');
+    new Chart(hba1cCtx, {
+        type: 'line',
+        data: {
+            labels: ['Your HbA1c', 'Normal HbA1c'],
+            datasets: [{
+                label: 'HbA1c Level',
+                data: [{{ HbA1c_level }}, 5.6],
+                borderColor: 'rgba(255, 99, 132, 1)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        }
+    });
+
+    // Blood Glucose Line Chart
+    var glucoseCtx = document.getElementById('glucoseChart').getContext('2d');
+    new Chart(glucoseCtx, {
+        type: 'line',
+        data: {
+            labels: ['Your Glucose', 'Normal Glucose'],
+            datasets: [{
+                label: 'Blood Glucose Level',
+                data: [{{ blood_glucose_level }}, 140],
+                borderColor: 'rgba(54, 162, 235, 1)',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        }
+    });
+</script>
+
+</body>
+</html>

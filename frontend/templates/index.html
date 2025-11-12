@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Diabetes Prediction</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+ <style>
+  body {
+    background: linear-gradient(120deg, #e3f0ff 0%, #f8fbff 100%);
+    min-height: 100vh;
+  }
+  .form-container {
+    max-width: 600px;
+    margin: 60px auto;
+    padding: 32px 32px 24px 32px;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(25, 118, 210, 0.10);
+    border: 1px solid #e3f0ff;
+  }
+  .form-container h2 {
+    color: #1976d2;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    font-size: 2.1rem;
+  }
+  .form-container p.text-muted {
+    color: #5c6f7c !important;
+    margin-bottom: 2rem;
+  }
+  .form-label {
+    color: #1976d2;
+    font-weight: 600;
+  }
+  .form-control:focus {
+    border-color: #42a5f5;
+    box-shadow: 0 0 0 2px #e3f0ff;
+  }
+  .btn-success {
+    background: linear-gradient(90deg, #1976d2 0%, #42a5f5 100%);
+    border: none;
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
+    transition: background 0.2s, color 0.2s;
+  }
+  .btn-success:hover {
+    background: #1565c0;
+    color: #fff;
+  }
+    .custom-navbar {
+        background: linear-gradient(90deg, #1976d2 0%, #42a5f5 100%);
+        min-height: 70px;
+        box-shadow: 0 4px 16px rgba(25, 118, 210, 0.08);
+    }
+    .custom-navbar .navbar-brand {
+        color: #fff !important;
+        font-size: 2rem;
+        font-weight: 800;
+        letter-spacing: 1px;
+        text-shadow: 0 2px 8px rgba(33, 150, 243, 0.15);
+    }
+    .custom-navbar .btn,
+    .custom-navbar .nav-link {
+        color: #fff !important;
+        border-color: #fff !important;
+        font-weight: 500;
+        margin-left: 0.5rem;
+        margin-right: 0.5rem;
+        transition: background 0.2s, color 0.2s;
+    }
+    .custom-navbar .btn-outline-primary:hover,
+    .custom-navbar .btn-outline-secondary:hover {
+        background: #fff !important;
+        color: #1976d2 !important;
+    }
+</style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg custom-navbar mb-4">
+  <div class="container">
+    <a class="navbar-brand" href="/">Am I Diabetic?</a>
+    <div class="ms-auto">
+      <a href="{{ url_for('login') }}" class="btn btn-outline-primary me-2">Login</a>
+      <a href="{{ url_for('signup') }}" class="btn btn-primary">Signup</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Diabetes Prediction Form -->
+<div class="container">
+    <div class="form-container">
+        <h2 class="text-center">Diabetes Prediction Form</h2>
+        <p class="text-center text-muted">Enter your details below to check for diabetes risk.</p>
+
+        <form action="{{ url_for('predict') }}" method="post">
+            <div class="mb-3">
+                <label class="form-label">Age</label>
+                <input type="number" step="0.01" name="age" required class="form-control" placeholder="Enter age">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">BMI</label>
+                <input type="number" step="0.01" name="bmi" required class="form-control" placeholder="Enter BMI">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">HbA1c Level</label>
+                <input type="number" step="0.01" name="HbA1c_level" required class="form-control" placeholder="Enter HbA1c Level">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Blood Glucose Level</label>
+                <input type="number" step="0.01" name="blood_glucose_level" required class="form-control" placeholder="Enter Blood Glucose Level">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Gender</label>
+                <select name="gender" required class="form-control">
+                    <option value="">Select Gender</option>
+                    <option value="Female">Female</option>
+                    <option value="Male">Male</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Smoking History</label>
+                <select name="smoking_history" required class="form-control">
+                    <option value="">Select Smoking History</option>
+                    <option value="No Info">No Info</option>
+                    <option value="current">Current Smoker</option>
+                    <option value="ever">Ever Smoked</option>
+                    <option value="former">Former Smoker</option>
+                    <option value="never">Never Smoked</option>
+                    <option value="not current">Not Currently Smoking</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Heart Disease</label>
+                <select name="heart_disease" required class="form-control">
+                    <option value="0">No Heart Disease</option>
+                    <option value="1">Yes, I have Heart Disease</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Hypertension</label>
+                <select name="hypertension" required class="form-control">
+                    <option value="0">No Hypertension</option>
+                    <option value="1">Yes, I have Hypertension</option>
+                </select>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-success w-100">Predict Diabetes</button>
+        </form>
+    </div>
+</div>
+
+
+</body>
+</html>

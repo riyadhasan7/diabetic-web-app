@@ -1,0 +1,14 @@
+pandas
+matplotlib
+scikit-learn
+imbalanced-learn
+joblib
+flask
+flask-login
+flask-bcrypt
+itsdangerous
+flask-mail
+mysql-connector-python
+numpy
+reportlab
+gunicorn

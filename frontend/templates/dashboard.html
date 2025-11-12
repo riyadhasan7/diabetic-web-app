@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>User Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chart-container {
+            width: 100%;
+            max-width: 900px;
+            margin: auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .custom-navbar {
+            background: linear-gradient(90deg, #1976d2 0%, #42a5f5 100%);
+            min-height: 70px;
+            box-shadow: 0 4px 16px rgba(25, 118, 210, 0.08);
+        }
+        .custom-navbar .navbar-brand {
+            color: #fff !important;
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 8px rgba(33, 150, 243, 0.15);
+        }
+        .custom-navbar .btn,
+        .custom-navbar .nav-link {
+            color: #fff !important;
+            border-color: #fff !important;
+            font-weight: 500;
+            margin-left: 0.5rem;
+            margin-right: 0.5rem;
+            transition: background 0.2s, color 0.2s;
+        }
+        .custom-navbar .btn-outline-primary:hover,
+        .custom-navbar .btn-outline-secondary:hover {
+            background: #fff !important;
+            color: #1976d2 !important;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg custom-navbar mb-4">
+  <div class="container">
+    <a class="navbar-brand" href="/">Am I Diabetic?</a>
+    <div class="ms-auto">
+      <a href="{{ url_for('home') }}" class="btn btn-outline-primary">Back to Home</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container mt-5">
+    <h2 class="text-center">User Dashboard</h2>
+    <p class="text-center text-muted">View your past predictions</p>
+
+    <!-- Health Trends Graph at the Top -->
+    <div class="chart-container">
+        <h4 class="text-center">Health Trends Over Time</h4>
+        <canvas id="historyChart"></canvas>
+    </div>
+
+    {% if records %}
+    <table class="table table-bordered mt-4">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Age</th>
+                <th>BMI</th>
+                <th>HbA1c</th>
+                <th>Blood Glucose</th>
+                <th>Gender</th>
+                <th>Smoking</th>
+                <th>Heart Disease</th>
+                <th>Hypertension</th>
+                <th>Prediction</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in records %}
+            <tr>
+                <td>{{ record[9] }}</td>
+                <td>{{ record[0] }}</td>
+                <td>{{ record[1] }}</td>
+                <td>{{ record[2] }}</td>
+                <td>{{ record[3] }}</td>
+                <td>{{ record[4] }}</td>
+                <td>{{ record[5] }}</td>
+                <td>{{ "Yes" if record[6] == 1 else "No" }}</td>
+                <td>{{ "Yes" if record[7] == 1 else "No" }}</td>
+                <td><strong>{{ record[8] }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Download Buttons -->
+    <div class="text-center mt-4">
+        <a href="{{ url_for('export_csv') }}" class="btn btn-success">Download CSV</a>
+        <a href="{{ url_for('export_pdf') }}" class="btn btn-danger">Download PDF</a>
+    </div>
+
+    {% else %}
+    <p class="text-center text-muted">No records found.</p>
+    {% endif %}
+</div>
+
+
+<script>
+    var ctx = document.getElementById('historyChart').getContext('2d');
+    var historyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ dates | tojson }},
+            datasets: [{
+                label: 'HbA1c Level',
+                data: {{ hba1c_levels | tojson }},
+                borderColor: 'rgba(255, 99, 132, 1)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4,
+                yAxisID: 'y-left'
+            }, {
+                label: 'Blood Glucose',
+                data: {{ glucose_levels | tojson }},
+                borderColor: 'rgba(54, 162, 235, 1)',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4,
+                yAxisID: 'y-right'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' }
+            },
+            scales: {
+                'y-left': {
+                    position: 'left',
+                    beginAtZero: true,
+                    title: { display: true, text: 'HbA1c Level' }
+                },
+                'y-right': {
+                    position: 'right',
+                    beginAtZero: true,
+                    title: { display: true, text: 'Blood Glucose Level' },
+                    grid: { drawOnChartArea: false }  // Prevents overlapping grid lines
+                }
+            }
+        }
+    });
+</script>
+
+
+</body>
+</html>
