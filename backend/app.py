@@ -41,11 +41,13 @@ retry_delay = 5  # seconds
 for attempt in range(max_retries):
     try:
         db = mysql.connector.connect(
-            host="db",
-            user="root",
-            password="riad3214321?",
+            host="diabetic-web-app-server.mysql.database.azure.com",
+            user="yynzjytnxm",
+            password="Riyad3214321.",
+            port=3306,
             database="diabetes_db",
-            auth_plugin="mysql_native_password"
+            ssl_ca="C:\\Users\\r1yad\\Downloads\\DigiCertGlobalRootG2.crt (1).pem",
+            ssl_disabled=False
         )
         if db.is_connected():
             print("✅ Connected to MySQL database.")
