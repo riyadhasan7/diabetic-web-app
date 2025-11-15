@@ -42,12 +42,11 @@ for attempt in range(max_retries):
     try:
         db = mysql.connector.connect(
             host="diabetic-web-app-server.mysql.database.azure.com",
-            user="yynzjytnxm",
-            password="Riyad3214321.",
+            user="sqsiffvsam",
+            password="RiyadAdmin123?",
             port=3306,
             database="diabetes_db",
-            ssl_ca="C:\\Users\\r1yad\\Downloads\\DigiCertGlobalRootG2.crt (1).pem",
-            ssl_disabled=False
+            ssl_ca="C:\\Users\\r1yad\\Downloads\\DigiCertGlobalRootG2.crt (2).pem"
         )
         if db.is_connected():
             print("✅ Connected to MySQL database.")
