@@ -24,5 +24,7 @@
     "files.associations": {
         "*.tf": "terraform",
         "*.tfvars": "terraform"
-    }
+    },
+    "appService.defaultWebAppToDeploy": "/subscriptions/207b19a0-884b-4b51-bd04-f1512c550995/resourceGroups/diabetic-web-app-rg/providers/Microsoft.Web/sites/diabetic-web-app",
+    "appService.deploySubpath": "."
 }
