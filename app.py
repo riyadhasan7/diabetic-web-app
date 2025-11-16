@@ -48,11 +48,13 @@ retry_delay = 5  # seconds
 for attempt in range(max_retries):
     try:
         db = mysql.connector.connect(
-            host=DB_HOST,
-            user=DB_USER,
-            password=DB_PASSWORD,
-            port=DB_PORT,
-            database=DB_NAME
+            host="diabetic-web-app-server.mysql.database.azure.com",
+            user="yynzjytnxm",
+            password="Riyad3214321.",
+            port=3306,
+            database="diabetes_db",
+            ssl_ca="C:\\Users\\r1yad\\Downloads\\DigiCertGlobalRootG2.crt (1).pem",
+            ssl_disabled=False
         )
         if db.is_connected():
             print("✅ Connected to MySQL database.")
@@ -520,6 +522,7 @@ def export_pdf():
         return f"Error generating PDF: {str(e)}"
 
 
-if __name__ == '__main__':
-      app.run(host="0.0.0.0", port=5000)
+import os
 
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
