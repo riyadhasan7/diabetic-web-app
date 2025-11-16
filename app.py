@@ -1,8 +1,7 @@
 from flask import Flask, request, render_template, redirect, url_for, session, flash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_bcrypt import Bcrypt
-from itsdangerous import URLSafeTimedSerializer
-from flask_mail import Mail, Message
+import os
 import mysql.connector
 import joblib
 import numpy as np
@@ -19,21 +18,29 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
-# Email Configuration
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USE_SSL'] = False
-app.config['MAIL_USERNAME'] = 'your-email@gmail.com'
-app.config['MAIL_PASSWORD'] = 'your-email-password'
 
-mail = Mail(app)
-s = URLSafeTimedSerializer(app.secret_key)
-
-# Connect to MySQL Database
+ # Connect to MySQL Database
 import time
 import mysql.connector
 from mysql.connector import Error
+from dotenv import load_dotenv
+load_dotenv()
+
+# Read DB connection info from environment variables
+DB_HOST = os.getenv("DB_HOST")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_NAME = os.getenv("DB_NAME")
+DB_PORT = int(os.getenv("DB_PORT", "3306"))
+
+missing = [k for k,v in {
+    "DB_HOST": DB_HOST,
+    "DB_USER": DB_USER,
+    "DB_PASSWORD": DB_PASSWORD,
+    "DB_NAME": DB_NAME,
+}.items() if not v]
+if missing:
+    raise RuntimeError(f"Missing required environment variables: {', '.join(missing)}.\nSet them in .env or your environment.")
 
 max_retries = 10
 retry_delay = 5  # seconds
@@ -41,13 +48,11 @@ retry_delay = 5  # seconds
 for attempt in range(max_retries):
     try:
         db = mysql.connector.connect(
-            host="diabetic-web-app-server.mysql.database.azure.com",
-            user="yynzjytnxm",
-            password="Riyad3214321.",
-            port=3306,
-            database="diabetes_db",
-            ssl_ca="C:\\Users\\r1yad\\Downloads\\DigiCertGlobalRootG2.crt (1).pem",
-            ssl_disabled=False
+            host=DB_HOST,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            port=DB_PORT,
+            database=DB_NAME
         )
         if db.is_connected():
             print("✅ Connected to MySQL database.")
@@ -159,59 +164,15 @@ def logout():
 
 @app.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
-    if request.method == 'POST':
-        email = request.form.get('email')
-
-        # Check if the email exists in the database
-        cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
-        user = cursor.fetchone()
-
-        if user:
-            token = s.dumps(email, salt='password-reset')
-            reset_url = url_for('reset_password', token=token, _external=True)
-
-            #  Send reset email
-            msg = Message("Password Reset Request",
-                          sender="your-email@gmail.com",
-                          recipients=[email])
-            msg.body = f"Click the link below to reset your password:\n{reset_url}\n\nIf you didn't request this, ignore this email."
-            mail.send(msg)
-
-            flash("A password reset link has been sent to your email.", "success")
-            return redirect(url_for('login'))
-        else:
-            flash("No account found with that email.", "danger")
-
-    return render_template('forgot_password.html')
+    flash("Password reset via email is disabled.", "warning")
+    return redirect(url_for('login'))
 
 
 
 @app.route('/reset_password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
-    try:
-        email = s.loads(token, salt='password-reset', max_age=3600)  # ✅ Link expires in 1 hour
-    except Exception:
-        flash("The password reset link is invalid or has expired.", "danger")
-        return redirect(url_for('forgot_password'))
-
-    if request.method == 'POST':
-        new_password = request.form.get('new_password')
-        confirm_password = request.form.get('confirm_password')
-
-        if new_password != confirm_password:
-            flash("Passwords do not match.", "danger")
-            return redirect(url_for('reset_password', token=token))
-
-        hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
-
-        # Update password in MySQL
-        cursor.execute("UPDATE users SET password_hash = %s WHERE email = %s", (hashed_password, email))
-        db.commit()
-
-        flash("Your password has been updated! You can now log in.", "success")
-        return redirect(url_for('login'))
-
-    return render_template('reset_password.html', token=token)
+    flash("Password reset via email is disabled.", "warning")
+    return redirect(url_for('login'))
 
 
 
@@ -560,4 +521,5 @@ def export_pdf():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+      app.run(host="0.0.0.0", port=5000)
+
