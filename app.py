@@ -10,20 +10,19 @@ app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 bcrypt = Bcrypt(app)
 
-# Load the saved model at the start
-model = joblib.load(open("model.pkl", "rb"))
-
 # Flask-Login Setup
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
 
- # Connect to MySQL Database
+# Connect to MySQL Database
 import time
 import mysql.connector
 from mysql.connector import Error
 from dotenv import load_dotenv
+import os
+
 load_dotenv()
 
 # Read DB connection info from environment variables
@@ -39,12 +38,49 @@ missing = [k for k,v in {
     "DB_PASSWORD": DB_PASSWORD,
     "DB_NAME": DB_NAME,
 }.items() if not v]
+
 if missing:
-    raise RuntimeError(f"Missing required environment variables: {', '.join(missing)}.\nSet them in .env or your environment.")
+    raise RuntimeError(
+        f"Missing required environment variables: {', '.join(missing)}"
+    )
 
 max_retries = 10
 retry_delay = 5  # seconds
 
+# 1️⃣ Connect without database to create DB
+for attempt in range(max_retries):
+    try:
+        admin_conn = mysql.connector.connect(
+            host=DB_HOST,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            port=DB_PORT
+        )
+        if admin_conn.is_connected():
+            print("🟢 Connected to MySQL (admin mode).")
+            break
+    except Error as e:
+        print(f"⏳ Attempt {attempt + 1} failed: {e}")
+        time.sleep(retry_delay)
+else:
+    print("❌ Cannot connect to MySQL server at all.")
+    exit(1)
+
+admin_cursor = admin_conn.cursor()
+
+# 2️⃣ Create database if not exists
+try:
+    admin_cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{DB_NAME}`;")
+    print(f"🟢 Database '{DB_NAME}' verified/created.")
+except Error as e:
+    print("❌ Failed to create database:", e)
+    exit(1)
+
+admin_cursor.close()
+admin_conn.close()
+
+
+# 3️⃣ Now connect to the actual DB
 for attempt in range(max_retries):
     try:
         db = mysql.connector.connect(
@@ -55,16 +91,55 @@ for attempt in range(max_retries):
             database=DB_NAME
         )
         if db.is_connected():
-            print("✅ Connected to MySQL database.")
+            print("🟢 Connected to target DB:", DB_NAME)
             break
     except Error as e:
-        print(f"⏳ Attempt {attempt + 1} failed: {e}")
+        print(f"⏳ Attempt {attempt + 1} (DB reconnect) failed: {e}")
         time.sleep(retry_delay)
 else:
-    print("❌ Could not connect to MySQL after several attempts.")
+    print("❌ Could not connect to target DB after creation.")
     exit(1)
 
 cursor = db.cursor()
+
+# 4️⃣ Auto-create required tables
+TABLE_SQL = """
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS user_records (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    age FLOAT,
+    bmi FLOAT,
+    HbA1c_level FLOAT,
+    blood_glucose_level FLOAT,
+    gender VARCHAR(10),
+    smoking_history VARCHAR(20),
+    heart_disease INT,
+    hypertension INT,
+    prediction VARCHAR(10),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+"""
+
+print("🛠 Creating tables if they do not exist...")
+
+try:
+    for statement in TABLE_SQL.split(";"):
+        stmt = statement.strip()
+        if stmt:
+            cursor.execute(stmt + ";")
+    db.commit()
+    print("🟢 All tables created/verified.")
+except Error as e:
+    print("❌ Failed to create tables:", e)
+
 
 
 # Load the Trained Model
